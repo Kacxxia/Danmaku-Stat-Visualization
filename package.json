@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/Kacxxia/Danmaku-Stat-Visualization/issues"
   },
-  "homepage": "https://github.com/Kacxxia/Danmaku-Stat-Visualization#readme"
+  "homepage": "https://github.com/Kacxxia/Danmaku-Stat-Visualization#readme",
+  "devDependencies": {
+    "eslint": "^5.14.1"
+  }
 }
