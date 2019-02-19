@@ -11,5 +11,6 @@
   "dependencies": {
     "express": "^4.16.4",
     "influx": "^5.0.7"
-  }
+  },
+  "devDependencies": {}
 }
