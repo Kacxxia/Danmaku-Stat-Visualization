@@ -1,0 +1,30 @@
+{
+  "name": "danmaku-stat-visualization",
+  "version": "1.0.0",
+  "description": "get Danmaku from Bilibili/Douyu and visualize their statistics",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kacxxia/Danmaku-Stat-Visualization.git"
+  },
+  "keywords": [
+    "React",
+    "RxJS",
+    "D3",
+    "Websocket",
+    "Influx",
+    "Express.",
+    "Danmaku",
+    "Douyu",
+    "Bilibili"
+  ],
+  "author": "Kacxxia",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Kacxxia/Danmaku-Stat-Visualization/issues"
+  },
+  "homepage": "https://github.com/Kacxxia/Danmaku-Stat-Visualization#readme"
+}
