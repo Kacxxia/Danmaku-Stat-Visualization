@@ -5,11 +5,15 @@ const DanmakuHime_Events = {
   "close": "DanmakuHime:connect:closed"
 }
 
+const Session_Events = {
+  "connect:failed": "Session:connect:failed",
+  "connect:succeed": "Session:connect:succeed",
+  "msg": "Session:msg",
+  "close": "Session:connect:closed"
+}
+
 const Network_Events = {
-  "connect:failed": "connect:failed",
-  "connect:succeed": "connect:succeed",
-  "msg": "msg",
-  "close": "connect:closed"
+  "pkg": "Network:package:received"
 }
 
 const Header_Fields = {
@@ -24,8 +28,14 @@ const Header_Fields = {
   "reserve": "reserve"
 }
 
+const CONNECTION_TCP = "tcp"
+const CONNECTION_WEBSOCKET = "websocket"
+
 module.exports = {
   DanmakuHime_Events,
+  Session_Events,
   Network_Events,
-  Header_Fields
+  Header_Fields,
+  CONNECTION_TCP,
+  CONNECTION_WEBSOCKET
 }

@@ -1,8 +1,10 @@
 const EventEmitter = require('events')
 const DouyuHime = require('./DouyuHime')
 const BiliBiliHime = require('./BiliBiliHime')
-const { DanmakuHime_Events, Network_Events } = require('./constants')
+const { DanmakuHime_Events, Session_Events } = require('./constants')
 
+const STATUS_CLOSED = "closed"
+const STATUS_CONNECTED = "connected"
 
 class DanmakuHime extends EventEmitter {
   constructor() {
@@ -11,8 +13,13 @@ class DanmakuHime extends EventEmitter {
   }
 
   connect(url, options) {
-    const BiliBiliReg = /live.bilibili.com/
-    const DouyuReg = /douyu.com/
+    const BiliBiliReg = /live\.bilibili\.com\/\d+/
+    const DouyuReg = /douyu\.com\/\d+/
+
+    if (this.status === STATUS_CONNECTED) {
+      this.close()
+    }
+
     if (BiliBiliReg.test(url)) {
       this.client = new BiliBiliHime()
     } else if (DouyuReg.test(url)) {
@@ -20,21 +27,23 @@ class DanmakuHime extends EventEmitter {
     } else {
       this.emit(DanmakuHime_Events["connect:failed"], new Error("Invalid URL"))
     }
-    this.client.on(Network_Events["connect:succeed"], () => {
+    
+    this.client.on(Session_Events["connect:succeed"], () => {
       this.emit(DanmakuHime_Events["connect:succeed"])
+      this.status = STATUS_CONNECTED
     })
-    this.client.on(Network_Events["msg"], () => {
-      this.emit(DanmakuHime_Events["msg"])
+    this.client.on(Session_Events["connect:failed"], (err) => {
+      this.emit(DanmakuHime_Events["connect:succeed"], err)
+    })
+    this.client.on(Session_Events["msg"], (msg) => {
+      this.emit(DanmakuHime_Events["msg"], msg)
     })
     this.client.connect(url, options)
   }
 
   close() {
-
-    this.client.on(Network_Events["close"], () => {
-      this.emit(DanmakuHime_Events["close"])
-    })
     this.client.close()
+    this.status = STATUS_CLOSED
   }
 }
 
