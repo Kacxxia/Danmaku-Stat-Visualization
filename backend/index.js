@@ -18,7 +18,7 @@ app.use((req, res, next) => {
         }
       }
     ]).catch(err => {
-      console.err(err)
+      console.error(err)
     })
   })
   return next()
@@ -36,7 +36,7 @@ app.get('/stat', async (req, res) => {
     `)
     res.json(result)
   } catch (err) {
-    console.err(err)
+    console.error(err)
   }
 })
 
@@ -68,6 +68,6 @@ influx.getDatabaseNames()
     app.listen(8080, () => console.log("Server is listening on http://localhost:8080"))
   })
   .catch(err => {
-    console.err(err)
+    console.error(err)
   })
 
