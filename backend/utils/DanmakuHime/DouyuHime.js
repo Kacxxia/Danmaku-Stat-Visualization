@@ -106,6 +106,7 @@ class DouyuHime extends NetworkLayer {
     const roomID = url.match(roomIDReg)[1]
     if (roomID === undefined) throw new Error("Invalid Douyu URL")
     try {
+      await this.createConnection()
       await this.login(roomID, options)
       console.log(Session_Events["connect:succeed"])
       this.emit(Session_Events["connect:succeed"])
