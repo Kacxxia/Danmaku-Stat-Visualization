@@ -48,9 +48,7 @@ class DouyuHime extends NetworkLayer {
 
   handleSeg(header, data) {
     // remove the ending /\0
-    console.log(data)
     if (data[data.length - 1] === '\0') data = data.slice(0, data.length - 1)
-    if (data[data.length - 1] === '/') data = data.slice(0, data.length - 1)
     const dataObj = this.parseData(data)
     if (typeof dataObj === "object") {
       switch (dataObj.type) {
@@ -66,8 +64,7 @@ class DouyuHime extends NetworkLayer {
     }
   }
 
-  handleLogin(loginres) {
-    console.log(loginres)
+  handleLogin() {
     this._resolves["login"].resolve()
   }
 
@@ -92,7 +89,7 @@ class DouyuHime extends NetworkLayer {
     this.send({}, {
       type: "joingroup",
       rid: String(roomid),
-      gid: "66"
+      gid: "-9999"
     })
   }
 
