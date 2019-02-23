@@ -5,7 +5,7 @@ const hime = new DanmakuHime()
 
 hime.on(DanmakuHime_Events["msg"], console.log)
 hime.connect(
-  "https://www.douyu.com/633019",
+  "https://www.douyu.com/88660",
   {
     loginOptions: {
       dfl: 

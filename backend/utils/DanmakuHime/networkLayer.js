@@ -10,34 +10,17 @@ class NetworkLayer extends EventEmitter {
     this.bytes = settings.bytes
     this.defaults = settings.defaults
     this.isLittleEndiness = settings.isLittleEndiness
-    this.client = new Client(settings.connection, this.pkgHandler.bind(this))
-    this.client.connect()
     this.headerSize = this.header.reduce((acc, field) => acc + this.bytes[field], 0)
-    // Idiot Douyu. The length field occured twice but its value only counts one length field
+    // The length field occured twice but Douyu only takes one length field into account when set it.
     this.headerLength = Object.values(this.bytes).reduce((acc, length) => acc + length, 0)
-  }
 
-  readBuf(buf, length, offset) {
-    switch (length) {
-      case 1:
-        return buf.readUInt8(offset)
-      case 2:
-        if (this.isLittleEndiness) {
-          return buf.readUInt16LE(offset)
-        } else {
-          return buf.readUInt16BE(offset)
-        }
-      case 4:
-        if (this.isLittleEndiness) {
-          return buf.readUInt32LE(offset)
-        } else {
-          return buf.readUInt32BE(offset)
-        }
-      default:
-        throw new Error("Invalid readBuf usage")
-    }
+    this.pkgHandler = new PackageHandler(
+      settings,
+      (header, data) => this.emit(Network_Events["pkg"], header, data)
+    )
+    this.client = new Client(settings.connection, this.pkgHandler.handle)
+    this.client.connect()
   }
-  
   
   writeBuf(buf, length, value, offset) {
     switch (length) {
@@ -61,25 +44,6 @@ class NetworkLayer extends EventEmitter {
       default:
         throw new Error("Invalid writeBuf usage")
     }
-  }
-
-  pkgHandler(data) {
-    if (!Buffer.isBuffer(data)) {
-      console.error(typeof data)
-      throw new Error("Error in parsing data")
-    }
-    let buf = Buffer.from(data)
-
-    const results = []
-    while(buf.length > 0) {
-      const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.header.indexOf(Header_Fields["length"])) + this.headerSize - this.headerLength
-      results.push([
-        buf.slice(0, this.headerSize),
-        buf.slice(this.headerSize, pkgLength - this.headerSize).toString()
-      ])
-      buf = buf.slice(pkgLength, buf.length)
-    }
-    results.forEach(([header, data]) => this.emit(Network_Events["pkg"], header, data))
   }
 
   send(headers, data) {
@@ -191,6 +155,76 @@ class TCPClient {
       return;
     }
     this.client.write(data)
+  }
+}
+
+class PackageHandler {
+  constructor(settings, cb) {
+    this.header = settings.header
+    this.isLittleEndiness = settings.isLittleEndiness
+    this.bytes = settings.bytes
+    this.headerSize = this.header.reduce((acc, field) => acc + this.bytes[field], 0)
+    // The length field occured twice but Douyu only takes one length field into account when set it.
+    this.headerLength = Object.values(this.bytes).reduce((acc, length) => acc + length, 0)
+
+    this.cb = cb
+    this.pkgTotalLength = 0
+    this.pkgHeader = Buffer.alloc(0)
+    this.pkgData = Buffer.alloc(0)
+    this.handle = this.handle.bind(this)
+  }
+
+  reset() {
+    this.pkgTotalLength = 0
+    this.pkgHeader = Buffer.alloc(0)
+    this.pkgData = Buffer.alloc(0)
+  }
+
+  readBuf(buf, length, offset) {
+    switch (length) {
+      case 1:
+        return buf.readUInt8(offset)
+      case 2:
+        if (this.isLittleEndiness) {
+          return buf.readUInt16LE(offset)
+        } else {
+          return buf.readUInt16BE(offset)
+        }
+      case 4:
+        if (this.isLittleEndiness) {
+          return buf.readUInt32LE(offset)
+        } else {
+          return buf.readUInt32BE(offset)
+        }
+      default:
+        throw new Error("Invalid readBuf usage")
+    }
+  }
+
+  handle(data) {
+    if (!Buffer.isBuffer(data)) {
+      console.error(typeof data)
+      throw new Error("Error in parsing data")
+    }
+    let buf = Buffer.from(data)
+
+    while(buf.length > 0) {
+      const collectedLength = this.pkgHeader.length + this.pkgData.length
+      if (collectedLength < this.pkgTotalLength) {
+        this.pkgData = Buffer.concat([this.pkgData, buf.slice(0, this.pkgTotalLength - collectedLength)])
+        buf = buf.slice(this.pkgTotalLength - collectedLength, buf.length)
+      } else {
+        const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.header.indexOf(Header_Fields["length"])) + this.headerSize - this.headerLength
+        this.pkgTotalLength = pkgLength
+        this.pkgHeader = buf.slice(0, this.headerSize)
+        this.pkgData = Buffer.concat([this.pkgData, buf.slice(this.headerSize, pkgLength)])
+        buf = buf.slice(pkgLength, buf.length)
+      }
+      if ((this.pkgHeader.length + this.pkgData.length) === this.pkgTotalLength) {
+        this.cb(this.pkgHeader, this.pkgData.toString())
+        this.reset()
+      }
+    }
   }
 }
 
