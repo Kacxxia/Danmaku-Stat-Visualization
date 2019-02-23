@@ -92,11 +92,9 @@ class Client extends EventEmitter {
   connect(url) {
     this.client.connect(url, (status, ...args) => {
       if (status === "succeed") {
-        console.log(1)
         this.emit(Network_Events["connect:succeed"], ...args)
       }
       if (status === "failed") {
-        console.log(2)
         this.emit(Network_Events["connect:failed"], ...args)
       }
     })
@@ -121,7 +119,9 @@ class WebsocketClient {
     this.client = new WS()
     this.client.on("connect", (connection) => {
       this.connection = connection
-      connection.on('message', this.msgHandler)
+      connection.on('message', (data) => {
+        this.msgHandler(data)
+      })
       callback("succeed")
     })
     this.client.on("connectFailed", (err) => {
@@ -183,6 +183,11 @@ class PackageHandler {
     this.headerSize = this.header.reduce((acc, field) => acc + this.bytes[field], 0)
     // The length field occured twice but Douyu only takes one length field into account when set it.
     this.headerLength = Object.values(this.bytes).reduce((acc, length) => acc + length, 0)
+    this.lengthOffset = 0
+    for (let i=0; i<this.header.length; i++) {
+      if (this.header[i] === Header_Fields["length"]) break;
+      this.lengthOffset += this.bytes[this.header[i]]
+    }
 
     this.cb = cb
     this.pkgTotalLength = 0
@@ -219,11 +224,16 @@ class PackageHandler {
   }
 
   handle(data) {
+    let buf
     if (!Buffer.isBuffer(data)) {
-      console.error(typeof data)
-      throw new Error("Error in parsing data")
+      if (data.binaryData !== undefined) {
+        buf = data.binaryData
+      } else {
+        throw new Error("Error in parsing data")
+      }
+    } else {
+      buf = Buffer.from(data)
     }
-    let buf = Buffer.from(data)
 
     while(buf.length > 0) {
       const collectedLength = this.pkgHeader.length + this.pkgData.length
@@ -231,7 +241,7 @@ class PackageHandler {
         this.pkgData = Buffer.concat([this.pkgData, buf.slice(0, this.pkgTotalLength - collectedLength)])
         buf = buf.slice(this.pkgTotalLength - collectedLength, buf.length)
       } else {
-        const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.header.indexOf(Header_Fields["length"])) + this.headerSize - this.headerLength
+        const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.lengthOffset) + this.headerSize - this.headerLength
         this.pkgTotalLength = pkgLength
         this.pkgHeader = buf.slice(0, this.headerSize)
         this.pkgData = Buffer.concat([this.pkgData, buf.slice(this.headerSize, pkgLength)])
