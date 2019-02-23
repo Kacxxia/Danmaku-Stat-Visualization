@@ -13,7 +13,9 @@ const Session_Events = {
 }
 
 const Network_Events = {
-  "pkg": "Network:package:received"
+  "pkg": "Network:package:received",
+  "connect:succeed": "Network:connect:succeed",
+  "connect:failed": "Network:connect:failed"
 }
 
 const Header_Fields = {
@@ -31,11 +33,14 @@ const Header_Fields = {
 const CONNECTION_TCP = "tcp"
 const CONNECTION_WEBSOCKET = "websocket"
 
+const BILIBILI_DANMAKU_SERVER = "wss://tx-bj4-live-comet-05.chat.bilibili.com/sub"
+
 module.exports = {
   DanmakuHime_Events,
   Session_Events,
   Network_Events,
   Header_Fields,
   CONNECTION_TCP,
-  CONNECTION_WEBSOCKET
+  CONNECTION_WEBSOCKET,
+  BILIBILI_DANMAKU_SERVER
 }

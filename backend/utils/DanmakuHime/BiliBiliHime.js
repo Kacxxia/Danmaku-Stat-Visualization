@@ -1,5 +1,5 @@
 const NetworkLayer = require('./networkLayer')
-const { Header_Fields } = require('./constants')
+const { Header_Fields, CONNECTION_WEBSOCKET, BILIBILI_DANMAKU_SERVER } = require('./constants')
 
 class BiliBiliHime extends NetworkLayer {
   constructor() {
@@ -20,7 +20,16 @@ class BiliBiliHime extends NetworkLayer {
         [Header_Fields["cmd"]]: 4,
         [Header_Fields["unknown-4"]]: 4
       },
-      isLittleEndiness: false
+      defaults: {
+        [Header_Fields["encrypt"]]: 0,
+        [Header_Fields["reserve"]]: 0,
+        [Header_Fields["cmd"]]: 689
+      },
+      isLittleEndiness: true,
+      connection: {
+        type: CONNECTION_WEBSOCKET,
+        host: BILIBILI_DANMAKU_SERVER
+      }
     })
   }
 }

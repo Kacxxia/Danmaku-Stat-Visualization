@@ -19,7 +19,14 @@ class NetworkLayer extends EventEmitter {
       (header, data) => this.emit(Network_Events["pkg"], header, data)
     )
     this.client = new Client(settings.connection, this.pkgHandler.handle)
-    this.client.connect()
+  }
+
+  createConnection(url) {
+    return new Promise((resolve, reject) => {
+      this.client.on(Network_Events["connect:succeed"], resolve)
+      this.client.on(Network_Events["connect:failed"], (err) => reject(err))
+      this.client.connect(url)
+    })
   }
   
   writeBuf(buf, length, value, offset) {
@@ -67,8 +74,9 @@ class NetworkLayer extends EventEmitter {
   }
 }
 
-class Client {
+class Client extends EventEmitter {
   constructor(conn, pkgHandler) {
+    super()
     switch (conn.type) {
       case CONNECTION_TCP:
         this.client = new TCPClient(conn, pkgHandler)
@@ -81,8 +89,17 @@ class Client {
     }
   }
 
-  connect() {
-    this.client.connect()
+  connect(url) {
+    this.client.connect(url, (status, ...args) => {
+      if (status === "succeed") {
+        console.log(1)
+        this.emit(Network_Events["connect:succeed"], ...args)
+      }
+      if (status === "failed") {
+        console.log(2)
+        this.emit(Network_Events["connect:failed"], ...args)
+      }
+    })
   }
 
   close() {
@@ -96,17 +113,21 @@ class Client {
 
 class WebsocketClient {
   constructor(url, msgHandler) {
-    this.url = url
+    this.defaultUrl = url
     this.msgHandler = msgHandler
-    this.client = new WS()
   }
   
-  connect() {
+  connect(url, callback) {
+    this.client = new WS()
     this.client.on("connect", (connection) => {
       this.connection = connection
       connection.on('message', this.msgHandler)
+      callback("succeed")
     })
-    this.client.connect(this.url)
+    this.client.on("connectFailed", (err) => {
+      callback("failed", err)
+    })
+    this.client.connect(url || this.defaultUrl)
   }
 
   close() {
@@ -118,25 +139,21 @@ class WebsocketClient {
   }
 }
 
-class TCPClient {
+class TCPClient extends EventEmitter {
   constructor(conn, msgHandler) {
+    super()
     this.conn = conn
     this.msgHandler = msgHandler
+  }
+  
+  connect(url, callback) {
     this.client = new TCP.Socket()
     this.connCallbacks = []
     this.client.on("data", this.msgHandler)
     this.client.on("error", (err) => console.log(err))
-    this.client.on("close", () => console.log("closed"))
     this.client.on("connect", () => {
-      console.log("connected")
-      if (this.connCallbacks) {
-        this.connCallbacks.forEach(cb => cb())
-        this.connCallbacks.length = 0
-      }
+      callback("succeed")
     })
-  }
-  
-  connect() {
     this.client.connect({
       port: this.conn.port,
       host: this.conn.host
