@@ -12,6 +12,7 @@
     "express": "^4.16.4",
     "influx": "^5.0.7",
     "jsdom": "^13.2.0",
+    "node-fetch": "^2.3.0",
     "websocket": "^1.0.28"
   },
   "devDependencies": {}

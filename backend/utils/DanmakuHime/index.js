@@ -5,5 +5,5 @@ const hime = new DanmakuHime()
 
 hime.on(DanmakuHime_Events["msg"], console.log)
 hime.connect(
-  "https://live.bilibili.com/48",
+  "https://live.bilibili.com/6",
 )

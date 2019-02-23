@@ -1,4 +1,5 @@
 const { JSDOM, VirtualConsole } = require('jsdom')
+const fetch = require('node-fetch')
 const NetworkLayer = require('./networkLayer')
 const { 
   Header_Fields,
@@ -106,30 +107,64 @@ class BiliBiliHime extends NetworkLayer {
     }, this.BEAT_INTERVAL);
   }
 
-  async getRoomID(url) {
+  async getRoomIDByAPI(url) {
     return new Promise((resolve, reject) => {
-        JSDOM.fromURL(url, {
-          runScripts: "dangerously",
-          resources: "usable",
-          virtualConsole: quietConsole
-        }).then(dom => {
-          let counter = 0
-          const p = setInterval(() => {
-            let bilibili = dom.window.BilibiliLive
-            counter++
-            if (bilibili && bilibili.ROOMID !== 0) {
-              clearInterval(p)
-              dom.window.close()
-              resolve(bilibili.ROOMID)
-              return;
-            }
-            if (counter * 500 >= 1000 * 14) {
-              clearInterval(p)
-              dom.window.close()
-              reject(new Error("解析URL失败，请检查网络或URL"))
-            }
-          }, 500)
-      })
+      const reg = /bilibili\.com\/(\d+)/
+      const result = reg.exec(url)
+      const id = result && result[1]
+      if (!id) {
+        resolve(-1)
+        return;
+      }
+      fetch(`https://api.live.bilibili.com/room/v1/Room/room_init?id=${id}`)
+        .then(body => body.json())
+        .then(response => {
+          const { data: { room_id, short_id } } = response
+          if (room_id && short_id) {
+            resolve(room_id)
+            return;
+          }
+          resolve(-1)
+        })
+        .catch(() => reject(-1))
+    })
+  }
+
+  async getRoomID(url) {
+    return new Promise(async (resolve, reject) => {
+      // BiliBili new api for room info
+      const roomID = await this.getRoomIDByAPI(url)
+      if (roomID > 0) {
+        resolve(roomID)
+        return;
+      }
+
+      // Tradition way to get roomid is set window.BilibiliLive by jsonp,
+      // which is now replaced by new api for new room, such as /6 room.
+      // This means the following method to get roomid cannot work for new room.
+
+      JSDOM.fromURL(url, {
+        runScripts: "dangerously",
+        resources: "usable",
+        virtualConsole: quietConsole
+      }).then(dom => {
+        let counter = 0
+        const p = setInterval(() => {
+          let bilibili = dom.window.BilibiliLive
+          counter++
+          if (bilibili && bilibili.ROOMID !== 0) {
+            clearInterval(p)
+            dom.window.close()
+            resolve(bilibili.ROOMID)
+            return;
+          }
+          if (counter * 500 >= 1000 * 14) {
+            clearInterval(p)
+            dom.window.close()
+            reject(new Error("解析URL失败，请检查网络或URL"))
+          }
+        }, 500)
+    })
     })
   }
 
