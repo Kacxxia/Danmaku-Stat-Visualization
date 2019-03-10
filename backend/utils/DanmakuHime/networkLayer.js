@@ -70,7 +70,7 @@ class NetworkLayer extends EventEmitter {
   }
 
   close() {
-    this.clien.close()
+    this.client.close()
   }
 }
 

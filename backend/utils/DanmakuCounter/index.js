@@ -1,13 +1,7 @@
 class DanmakuCounter {
-  constructor(options) {
-    const { 
-      keywordCollectInterval = 1000,
-      danmakuCollectInterval = 1000,
-    } = options
+  constructor() {
     this.danmakuCount = 0
     this.keywordMap = {}
-    this.keywordCollectInterval = keywordCollectInterval
-    this.danmakuCollectInterval = danmakuCollectInterval
   }
 
   increaseDanmakuCount() {
