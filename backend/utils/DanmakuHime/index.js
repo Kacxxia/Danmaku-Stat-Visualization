@@ -1,9 +1,12 @@
 const DanmakuHime = require('./applicationLayer')
 const { DanmakuHime_Events } = require('./constants')
 
-const hime = new DanmakuHime()
+module.exports = {
+  HIME_EVENTS: {
+    MSG: DanmakuHime_Events["msg"],
+    CONNECT_SUCCEED: DanmakuHime_Events["connect:succeed"],
+    CONNECT_FAILED: DanmakuHime_Events["connect:failed"]
+  },
+  DanmakuHime
+}
 
-hime.on(DanmakuHime_Events["msg"], console.log)
-hime.connect(
-  "https://live.bilibili.com/6",
-)

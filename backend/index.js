@@ -1,73 +1,50 @@
-const Influx = require('influx')
-const express = require('express')
+const http = require('http')
+const WS = require('websocket').server
+const { Mediator, MEDIATOR_CMDS } = require('./utils/Mediator')
 
-const app = express()
+const { WS_SERVER_PORT } = require('../common/constant')
+const mediator = new Mediator()
 
-app.use((req, res, next) => {
-  res.on("finish", () => {
-    influx.writePoints([
-      {
-        measurement: "Danmaku",
-        tags: {
-          platform: "BiliBili",
-          room: 14,
-        },
-        fields: {
-          author: "Admin",
-          msg: `visit on ${Date()}`
-        }
-      }
-    ]).catch(err => {
-      console.error(err)
-    })
-  })
-  return next()
-})
+const httpServer = http.createServer()
+httpServer.listen(WS_SERVER_PORT, () => console.log(`Server is Listening on port ${WS_SERVER_PORT}`))
 
-app.get('/', (req, res) => {
-  res.end('Hello, World!')
-})
-
-app.get('/stat', async (req, res) => {
-  try {
-    const result = await influx.query(`
-      select * from Danmaku
-      limit 10
-    `)
-    res.json(result)
-  } catch (err) {
-    console.error(err)
+const server = new WS({ httpServer })
+function originIsAllowed() { return true; }
+server.on("request", async (request) => {
+  if (!originIsAllowed(request.origin)) {
+    request.reject()
+    return;
   }
+
+  let timerCollectAll;
+
+  const connection = request.accept(null, request.origin)
+  console.log(`Got connection request from ${request.origin}`)
+  connection.on("message", (message) => {
+
+  })
+  connection.on("close", () => {
+    mediator.handle(origin, MEDIATOR_CMDS["CLOSE"])
+    mediator.close(origin)
+    clearInterval(timerCollectAll)
+  })
+
+
+  function danmakuHandler(danmaku) {
+    connection.sendUTF(JSON.stringify(danmaku))
+  }
+
+  const origin = request.origin
+  await mediator.check(origin, danmakuHandler)
+  await mediator.handle(origin, MEDIATOR_CMDS["CONNECT"], "https://www.douyu.com/532152")
+
+  let time = new Date().getTime()
+  timerCollectAll = setInterval(async () => {
+    const count = await mediator.handle(origin, MEDIATOR_CMDS["COLLECT_ALL"])
+    time += 60 * 1000
+    console.log(new Date(time), count)
+  }, 60 * 1000)
+
 })
 
-const influx = new Influx.InfluxDB({
-  host: 'localhost',
-  database: 'danmaku-vis',
-  schema: [
-    {
-      measurement: 'Danmaku',
-      fields: {
-        msg: Influx.FieldType.STRING,
-        author: Influx.FieldType.STRING
-      },
-      tags: [
-        'platform',
-        'room',
-      ]
-    }
-  ]
-})
-
-influx.getDatabaseNames()
-  .then(names => {
-    if (!names.includes('danmaku-vis')) {
-      return influx.createDatabase('danmaku-vis')
-    }
-  })
-  .then(() => {
-    app.listen(8080, () => console.log("Server is listening on http://localhost:8080"))
-  })
-  .catch(err => {
-    console.error(err)
-  })
 
