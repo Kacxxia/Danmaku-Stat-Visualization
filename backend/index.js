@@ -36,14 +36,14 @@ server.on("request", async (request) => {
 
   const origin = request.origin
   await mediator.check(origin, danmakuHandler)
-  await mediator.handle(origin, MEDIATOR_CMDS["CONNECT"], "https://www.douyu.com/532152")
+  await mediator.handle(origin, MEDIATOR_CMDS["CONNECT"], "https://www.douyu.com/537366")
 
   let time = new Date().getTime()
   timerCollectAll = setInterval(async () => {
     const count = await mediator.handle(origin, MEDIATOR_CMDS["COLLECT_ALL"])
-    time += 60 * 1000
+    time += 10 * 1000
     console.log(new Date(time), count)
-  }, 60 * 1000)
+  }, 10 * 1000)
 
 })
 
