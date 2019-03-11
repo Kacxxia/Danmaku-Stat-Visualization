@@ -236,21 +236,28 @@ class PackageHandler {
     }
 
     while(buf.length > 0) {
-      const collectedLength = this.pkgHeader.length + this.pkgData.length
-      if (collectedLength < this.pkgTotalLength) {
-        this.pkgData = Buffer.concat([this.pkgData, buf.slice(0, this.pkgTotalLength - collectedLength)])
-        buf = buf.slice(this.pkgTotalLength - collectedLength, buf.length)
-      } else {
-        const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.lengthOffset) + this.headerSize - this.headerLength
-        this.pkgTotalLength = pkgLength
-        this.pkgHeader = buf.slice(0, this.headerSize)
-        this.pkgData = Buffer.concat([this.pkgData, buf.slice(this.headerSize, pkgLength)])
-        buf = buf.slice(pkgLength, buf.length)
-      }
-      if ((this.pkgHeader.length + this.pkgData.length) === this.pkgTotalLength) {
-        this.cb(this.pkgHeader, this.pkgData.toString())
+      try {
+        const collectedLength = this.pkgHeader.length + this.pkgData.length
+        if (collectedLength < this.pkgTotalLength) {
+          this.pkgData = Buffer.concat([this.pkgData, buf.slice(0, this.pkgTotalLength - collectedLength)])
+          buf = buf.slice(this.pkgTotalLength - collectedLength, buf.length)
+        } else {
+          this.pkgHeader = Buffer.concat([this.pkgHeader, buf.slice(0, this.headerSize - this.pkgHeader.length)])
+          if (this.pkgHeader.length < this.headerSize) continue;
+          const pkgLength = this.readBuf(buf, this.bytes[Header_Fields["length"]], this.lengthOffset) + this.headerSize - this.headerLength
+          this.pkgTotalLength = pkgLength
+          this.pkgData = Buffer.concat([this.pkgData, buf.slice(this.headerSize, pkgLength)])
+          buf = buf.slice(pkgLength, buf.length)
+        }
+        if ((this.pkgHeader.length + this.pkgData.length) === this.pkgTotalLength) {
+          this.cb(this.pkgHeader, this.pkgData.toString())
+          this.reset()
+        }
+      } catch (err) {
+        console.log(err)
         this.reset()
       }
+     
     }
   }
 }
