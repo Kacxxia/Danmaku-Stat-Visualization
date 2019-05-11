@@ -1,0 +1,61 @@
+#URLInputterContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#URLInputter {
+  outline: none;
+  border: 1px solid lightgray;
+  border-radius: 2vh;
+  padding: 4px 16px;
+  flex-basis: 600px;
+  height: 4vh;
+}
+
+#URLInputter:hover {
+  box-shadow: 0 0px 2px 0.5px lightgray;
+}
+
+#URLInputterStatus {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  outline: none;
+  border: none;
+  width: 6vh;
+  height: 4vh;
+  position: relative;
+  right: 6vh;
+  background-color: transparent;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg)
+  }
+
+  to {
+    transform: rotate(360deg)
+  }
+}
+
+.icon.waiting {
+  animation: rotate infinite 0.8s linear;
+}
+#URLInputterStatus > .waiting,  #URLInputterStatus > .succeed, #URLInputterStatus > .failed{
+  display: none;
+}
+
+#URLInputterStatus.waiting > .waiting {
+  display: initial;
+}
+
+#URLInputterStatus.succeed > .succeed {
+  display: initial;
+}
+
+#URLInputterStatus.failed > .failed {
+  display: initial;
+}
+

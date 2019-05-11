@@ -131,7 +131,13 @@ class WebsocketClient {
   }
 
   close() {
-    this.connection.close()
+    if (this.connection) {
+      try {
+        this.connection.close()
+      } catch (err) {
+        console.error(err)
+      }
+    }
   }
 
   send(data) {
@@ -150,7 +156,10 @@ class TCPClient extends EventEmitter {
     this.client = new TCP.Socket()
     this.connCallbacks = []
     this.client.on("data", this.msgHandler)
-    this.client.on("error", (err) => console.log(err))
+    this.client.on("error", (err) => {
+      console.log(err)
+      callback("failed")
+    })
     this.client.on("connect", () => {
       callback("succeed")
     })
@@ -161,7 +170,13 @@ class TCPClient extends EventEmitter {
   }
 
   close() {
-    this.client.end()
+    if (this.client) {
+      try {
+        this.client.end()
+      } catch (err) {
+        console.error(err)
+      }
+    }
   }
 
   send(data) {
@@ -234,7 +249,16 @@ class PackageHandler {
     } else {
       buf = Buffer.from(data)
     }
-
+// 1. 收到buf
+//  1.1. 包期望总长为0(尚未确定)
+//   1.1.1. 从buf中切出头部所需的长度
+//    1.1.1.1 头部不全 -> 下一个包
+//    1.1.1.2 头部全
+//      1.1.1.2.1 从头部提取包总长度
+//        1.1.1.2.1.1 从buf中继续切所需的包长
+//          1.1.1.2.1.1.1 如果补全了，回调
+//          1.1.1.2.1.1.2 
+//
     while(buf.length > 0) {
       try {
         const collectedLength = this.pkgHeader.length + this.pkgData.length
@@ -256,6 +280,7 @@ class PackageHandler {
       } catch (err) {
         console.log(err)
         this.reset()
+        break;
       }
      
     }

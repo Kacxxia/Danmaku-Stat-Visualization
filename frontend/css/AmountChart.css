@@ -1,0 +1,10 @@
+#AmountChartContainer {
+  box-sizing: border-box;
+  padding: 1vh;
+  overflow: hidden;
+}
+
+
+#AmountChart {
+  height: 100%;
+}
