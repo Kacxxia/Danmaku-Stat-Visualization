@@ -9,6 +9,10 @@
   "author": "",
   "license": "GPL-3.0",
   "dependencies": {
+    "d3": "^5.9.2",
     "rxjs": "^6.4.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1"
   }
 }

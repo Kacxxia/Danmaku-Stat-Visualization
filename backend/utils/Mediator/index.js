@@ -1,43 +1,83 @@
-const { DanmakuHime, HIME_EVENTS } = require('../DanmakuHime')
-const DanmakuCounter = require('../DanmakuCounter')
-const DBManager = require('../DBManager')
 
-const database = new DBManager()
+let instance
 
-const CMD = {
-  "COLLECT_ALL": "COLLECT",
-  "COLLECT_KEYWORD": "COLLECT_KEYWORD",
+const CMDS = {
   "CONNECT": "CONNECT",
-  "CLOSE": "CLOSE"
+  "CONNECT_FAILED": "FAILED",
+  "CONNECT_SUCCEED": "CONNECT_SUCCEED",
+  "CLOSE": "CLOSE",
+  "NEW_CLIENT": "NEW_CLIENT",
+  "REMOVE_CLIENT": "REMOVE_CLIENT",
+  "CONNECT_DANMAKU_SERVER": "CONNECT_DANMAKU_SERVER",
+  "SUBSCRIBE": "SUBSCRIBE",
+  "DANMAKU": "DANMAKU",
+  "SPEED": "SPEED",
+  "COLLECT": "COLLECT",
+  "QUERY_STATS": "QUERY_STATS",
+  "SEND_STATS": "SEND_STATS",
+  "SWITCH_STATUS_CONNECTED": "SWITCH_STATUS_CONNECTED"
 }
 
 class Mediator {
   constructor() {
-    this.clients = {}
+    this.clientsManager = null
+    this.danmakuManager = null
   }
 
-  handle(origin, cmd, ...args) {
-    if (this.clients[origin] != undefined) {
-      return this.clients[origin].handle(cmd, ...args)
-    }
-    return Promise.reject(new Error("Unknown Host"))
-  }
-
-  check(origin, danmakuHandler) {
+  init() {
     return new Promise(async (resolve, reject) => {
+      this.clientsManager = new ClientsManager()
+      this.danmakuManager = new DanmakuManager()
       try {
-        if (!database.initiated) {
-          await database.init()
-        }
-        if (this.clients[origin] == undefined) {
-          this.clients[origin] = new ClientManager(danmakuHandler)
-        }
+        await this.danmakuManager.initDB()
         resolve()
-      } catch(err) {
+      } catch (err) {
         reject(err)
       }
-      
     })
+  }
+
+  handle(cmd, ...args) {
+    switch (cmd) {
+      case CMDS["NEW_CLIENT"]:
+        this.clientsManager.createClient(...args)
+        break;
+      case CMDS["REMOVE_CLIENT"]:
+        this.danmakuManager.removeSubscriber(...args)
+        break;
+      case CMDS["CONNECT_SUCCEED"]:
+        this.clientsManager.connectSucceed(...args)
+        break;
+      case CMDS["CONNECT_FAILED"]:
+        this.clientsManager.connectFailed(...args)
+        break;
+      case CMDS["CONNECT_DANMAKU_SERVER"]:
+        this.danmakuManager.addClient(...args)
+        break;
+      case CMDS["SUBSCRIBE"]:
+        this.danmakuManager.addSubscriber(...args)
+        break;
+      case CMDS["DANMAKU"]:
+        this.clientsManager.handleDanmaku(...args)
+        break;
+      case CMDS["SPEED"]:
+        this.clientsManager.handleSpeed(...args)
+        break;
+      case CMDS["COLLECT"]:
+        this.danmakuManager.handleCollect(...args)
+        break;
+      case CMDS["QUERY_STATS"]:
+        this.danmakuManager.handleStats(...args)
+        break;
+      case CMDS["SEND_STATS"]:
+        this.clientsManager.sendStats(...args)
+        break;
+      case CMDS["SWITCH_STATUS_CONNECTED"]:
+        this.clientsManager.connectSucceedSingle(...args)
+        break;
+      default:
+        console.warn("Mediator: Unknown cmd", cmd)
+    }
   }
 
   close(origin) {
@@ -45,77 +85,19 @@ class Mediator {
   }
 }
 
-class ClientManager {
-  constructor(danmakuHandler) {
-    this.hime = new DanmakuHime()
-    this.counter = new DanmakuCounter()
-    this.danmakuHandler = danmakuHandler
-    this.hime.on(HIME_EVENTS.MSG, (danmaku) => {
-      this.counter.increaseDanmakuCount()
-      this.counter.increaseKeywordCount(danmaku.msg)
-      database.save(
-        Object.assign({}, danmaku, {
-          platform: this.platform,
-          room: this.room
-        })
-      )
-      this.danmakuHandler(danmaku)
-    })
-    this.handle = this.handle.bind(this)
-  }
-
-  connect(url) {
-    return new Promise((resolve, reject) => {
-      const roomReg = /\.com\/(\d+)/
-      if (url.includes("douyu")) {
-        this.platform = "douyu"
-      } else if (url.includes("bilibili")) {
-        this.platform = "bilibili"
-      }
-      this.room = roomReg.exec(url)[1]
-  
-      this.hime.on(HIME_EVENTS["CONNECT_SUCCEED"], () => resolve())
-      this.hime.on(HIME_EVENTS["CONNECT_FAILED"], (err) => reject(err))
-  
-      this.hime.connect(url, {
-        loginOptions: {
-          dfl: 
-          [ { sn: '106', ss: '1' },
-            { sn: '107', ss: '1' },
-            { sn: '108', ss: '1' },
-            { sn: '105', ss: '1' } ],
-          username: '34950534',
-          password: '1234567890123456',
-          ver: '20180222',
-          aver: '218101901',
-          ct: '0' 
-        }
-      })
-    })
-  }
-
-  handle(cmd, ...args) {
-    return new Promise((resolve, reject) => {
-      switch (cmd) {
-        case CMD["COLLECT_ALL"]: 
-          resolve(this.counter.collectDanmaku())
-          break;
-        case CMD["COLLECT_KEYWORD"]:
-          resolve(this.counter.collectKeyword())
-          break;
-        case CMD["CONNECT"]:
-          this.connect(...args).then(resolve).catch(reject)
-          break;
-        case CMD["CLOSE"]:
-          this.hime.close()
-          break;
-      }
-    })
-  }
+function Singleton() {
+  if (instance == null) instance = new Mediator();
+  return instance
 }
 
-module.exports = {
-  Mediator,
-  MEDIATOR_CMDS: CMD
-};
+module.exports = { Mediator: Singleton, MEDIATOR_CMDS: CMDS }
+
+const ClientsManager = require('./ClientsManager')
+const DanmakuManager = require('./DanmakuManager')
+
+
+
+
+
+
 

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Visualization</title>
+  <link rel="stylesheet" href="./css/normalize.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/URLInputter.css">
+  <link rel="stylesheet" href="./css/SpeedChart.css">
+  <link rel="stylesheet" href="./css/ChatRoom.css">
+  <link rel="stylesheet" href="./css/AmountChart.css">
+  <link rel="stylesheet" href="./css/TagCloud.css">
+</head>
+<body>
+  <div id="root">
+    <div id="URLInputterContainer">
+      <input id="URLInputter"></input>
+      <div id="URLInputterStatus" class="">
+        <img class="icon waiting" src="./img/refresh.svg"></img>
+        <img class="icon succeed" src="./img/check.svg"></img>
+        <img class="icon failed" src="./img/clear.svg"></img>
+      </div>
+    </div>
+    <div id="SpeedChartContainer">
+      <div id="SpeedChart"></div>
+    </div>
+    <div id="ChatRoomContainer">
+      <div id="ChatRoom"></div>
+    </div>
+    <div id="AmountChartContainer">
+      <div id="AmountChart"></div>
+    </div>
+    <div id="TagCloudContainer">
+      <div id="Cloud"></div>
+    </div>
+  </div>
+  <script src="./lib/d3.min.js"></script>
+  <script src="./main.js" type="module"></script>
+</body>
+</html>

@@ -33,7 +33,7 @@ class DanmakuHime extends EventEmitter {
       this.status = STATUS_CONNECTED
     })
     this.client.on(Session_Events["connect:failed"], (err) => {
-      this.emit(DanmakuHime_Events["connect:succeed"], err)
+      this.emit(DanmakuHime_Events["connect:failed"], err)
     })
     this.client.on(Session_Events["msg"], (msg) => {
       this.emit(DanmakuHime_Events["msg"], msg)
@@ -42,7 +42,9 @@ class DanmakuHime extends EventEmitter {
   }
 
   close() {
-    this.client.close()
+    if (this.client) {
+      this.client.close()
+    }
     this.status = STATUS_CLOSED
   }
 }

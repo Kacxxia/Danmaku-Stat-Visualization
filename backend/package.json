@@ -15,5 +15,9 @@
     "node-fetch": "^2.3.0",
     "websocket": "^1.0.28"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "mongodb": "^3.2.3",
+    "mongoose": "^5.5.4",
+    "nodejieba2": "^2.2.4"
+  }
 }

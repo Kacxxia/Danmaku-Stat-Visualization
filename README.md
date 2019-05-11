@@ -1,2 +1,9 @@
 # Danmaku-Stat-Visualization
-get Danmaku from Bilibili/Douyu and visualize their statistics
+Input BiliBili/Douyu streaming URL, get Danmaku from it and visualize their statistics
+* Danmaku Sending Speed Live Line Chart
+* Danmaku
+* Danmaku Amount Bar Chart
+* Danmaku Word Frequency Word Cloud
+
+## Demo
+![Demo](./final.png)

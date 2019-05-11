@@ -1,0 +1,37 @@
+html, body, #root {
+  height: 100vh;
+}
+
+#root {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#URLInputterContainer {
+  height: 10vh;
+  flex-basis: 100%;
+}
+
+#SpeedChartContainer {
+  height: 50vh;
+  flex-basis: 60%;
+  flex-grow: 7;
+}
+
+#ChatRoomContainer {
+  height: 50vh;
+  flex-basis: 30%;
+  flex-grow: 3;
+}
+
+#AmountChartContainer {
+  height: 40vh;
+  flex-basis: 50%;
+  flex-grow: 6;
+}
+
+#TagCloudContainer {
+  height: 40vh;
+  flex-basis: 30%;
+  flex-grow: 4;
+}

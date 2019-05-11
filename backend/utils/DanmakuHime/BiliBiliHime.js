@@ -130,6 +130,16 @@ class BiliBiliHime extends NetworkLayer {
     })
   }
 
+  async getDanmakuServer(roomID) {
+    const response = await fetch(`https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id=${roomID}&platform=pc&player=web`)
+    const body = await response.json()
+    const { data: { host_server_list } } = body
+    // { host, port, wss_port, ws_port }
+    const prefer = host_server_list && host_server_list[0] && host_server_list[0].host
+    if (prefer) return 'wss://' + prefer + '/sub'
+    return undefined
+  }
+
   async getRoomID(url) {
     return new Promise(async (resolve, reject) => {
       // BiliBili new api for room info
@@ -170,11 +180,12 @@ class BiliBiliHime extends NetworkLayer {
 
   async connect(url) {
     try {
-      await this.createConnection()
       const roomID = await this.getRoomID(url)
+      const danmakuServerURL = await this.getDanmakuServer(roomID)
+      await this.createConnection(danmakuServerURL)
+      this.emit(Session_Events["connect:succeed"])
       this.join(roomID)
       console.log(Session_Events["connect:succeed"])
-      this.emit(Session_Events["connect:succeed"])
       this.beat()
     } catch (err) {
       console.error(err)
